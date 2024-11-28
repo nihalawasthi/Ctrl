@@ -153,23 +153,24 @@ body {
   align-items: center;
   background: linear-gradient(90deg, #405CD3, #778dec);
   border-radius: 15px;
-  padding: 10px 20px;
+  padding: 10px 20px 10px 0px;
   width: 70%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
-
-.input-box .icon {
-  margin-right: 10px;
+.input-box .icon button{
+  background: transparent;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: 10px;
 }
-
-.input-box .icon img {
-  width: 34px;
-  height: 34px;
+.input-box span{
+  font-size: 1.2rem;
 }
-
 .input-box .typeb {
   border: none;
-  border-left: 1px solid white;
   padding-left: 10px;
   background: none;
   color: white;
@@ -179,6 +180,22 @@ body {
   caret-color: white;
   font-family: 'Arial', sans-serif;
   font-weight: 400;
+  margin-right: 10px;
+}
+
+.input-box option {
+  background-color: #778dec;
+  color: white;
+  font-size: 16px;
+  outline: none;
+  width: 100%;
+  caret-color: white;
+  font-family: 'Arial', sans-serif;
+  font-weight: 400;
+}
+
+option:current{
+  background-color: #415DD3;
 }
 
 .input-box .typeb::placeholder {

@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from 'react';
-import logo from '../assets/logo.png';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 const InputBox = () => {
@@ -8,12 +7,14 @@ const InputBox = () => {
   const [answers, setAnswers] = useState({
     model: '',
     role: '',
-    customRole: '',
     personality: '',
     reference: '',
     mod_name: '',
     extraInfo: '',
   });
+  const [isCustomRole, setIsCustomRole] = useState(false); // Tracks if "Other" is selected
+
+  const inputRef = useRef(null); // Ref to manage focus for custom input
 
   const questions = [
     {
@@ -30,19 +31,19 @@ const InputBox = () => {
     },
     {
       type: 'text',
-      placeholder: 'Enter a custom role if "Other" is selected',
-      key: 'customRole',
-      condition: () => answers.role === 'Other',
+      placeholder: 'Enter the role',
+      key: 'role',
+      condition: () => isCustomRole,
     },
     {
       type: 'select',
-      label: 'Do you want your AI to behave like a particular character or famous personality?',
+      label: 'Any particular character or famous personality?',
       key: 'personalityPref',
       options: ['yes', 'no'],
     },
     {
       type: 'text',
-      placeholder: 'Enter their full name',
+      placeholder: "Enter the character's full name",
       key: 'personality',
       condition: () => answers.personalityPref === 'yes',
     },
@@ -63,7 +64,7 @@ const InputBox = () => {
       type: 'text',
       placeholder: 'Anything else you would like to specify?',
       key: 'extraInfo',
-      condition: () => true, // Optional, appears at the end
+      condition: () => true,
     },
   ];
 
@@ -96,14 +97,25 @@ const InputBox = () => {
     const value = e.target.value;
     const currentKey = questions[currentStep].key;
 
-    setAnswers((prevAnswers) => ({
-      ...prevAnswers,
-      [currentKey]: value,
-    }));
+    if (value === 'Other') {
+      setIsCustomRole(true); // Mark "Other" as custom
+      setAnswers((prevAnswers) => ({
+        ...prevAnswers,
+        [currentKey]: '',
+      }));
+      setTimeout(() => {
+        inputRef.current?.focus(); // Automatically focus custom input
+      }, 0);
+    } else {
+      setIsCustomRole(false); // Reset custom role
+      setAnswers((prevAnswers) => ({
+        ...prevAnswers,
+        [currentKey]: value,
+      }));
+    }
   };
 
   const handleNext = () => {
-    // Skip questions with conditions that are not met
     let nextStep = currentStep + 1;
     while (nextStep < questions.length && questions[nextStep].condition && !questions[nextStep].condition()) {
       nextStep++;
@@ -117,15 +129,17 @@ const InputBox = () => {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleNext();
+    }
+  };
+
   const currentQuestion = questions[currentStep];
 
   return (
     <div className="tbox">
       <div className="input-box">
-        <div className="icon">
-          <img src={logo} alt="icon" />
-        </div>
-
         {currentQuestion.type === 'text' ? (
           <input
             className="typeb"
@@ -133,11 +147,30 @@ const InputBox = () => {
             placeholder={currentQuestion.placeholder}
             value={answers[currentQuestion.key] || ''}
             onChange={handleInput}
+            onKeyDown={handleKeyDown}
+            ref={isCustomRole && currentQuestion.key === 'role' ? inputRef : null}
+          />
+        ) : currentQuestion.key === 'role' && isCustomRole ? (
+          // Render custom role input box for "Other"
+          <input
+            className="typeb"
+            type="text"
+            placeholder="Enter a custom role"
+            value={answers.role || ''}
+            onChange={(e) =>
+              setAnswers((prevAnswers) => ({
+                ...prevAnswers,
+                role: e.target.value,
+              }))
+            }
+            onKeyDown={handleKeyDown}
+            ref={inputRef}
           />
         ) : (
+          // Render dropdown for all other cases
           <select
             className="typeb"
-            value={answers[currentQuestion.key] || ''}
+            value={isCustomRole ? 'Other' : answers[currentQuestion.key] || ''}
             onChange={handleSelect}
           >
             <option value="" disabled>
@@ -151,31 +184,18 @@ const InputBox = () => {
           </select>
         )}
 
-        {answers.role === 'Other' && currentQuestion.key === 'role' && (
-          <input
-            className="typeb"
-            type="text"
-            placeholder="Enter a custom role"
-            value={answers.customRole || ''}
-            onChange={handleInput}
-          />
-        )}
-
-        <button
-          style={{
-            marginLeft: '10px',
-            background: '#405CD3',
-            color: 'white',
-            border: 'none',
-            padding: '10px',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-          onClick={handleNext}
-          disabled={answers[currentQuestion.key] === ''}
-        >
-          Next
-        </button>
+        <span>|</span>
+        <div className="icon">
+          <button
+            onClick={handleNext}
+            disabled={
+              (isCustomRole && answers.role === '') ||
+              (!isCustomRole && answers[currentQuestion.key] === '')
+            }
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
